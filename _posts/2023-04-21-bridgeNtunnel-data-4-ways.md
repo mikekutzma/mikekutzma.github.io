@@ -2,7 +2,7 @@
 layout: post
 title: "Bridge & Tunnel Data 4 Ways"
 date: 2023-04-20 12:00:00 EST
-categories: [Tech, MTA, Azure]
+tags: Tech MTA Azure
 ---
 
 Here we look at a few different ways to store the [MTA Bridge and Tunnel Hourly
