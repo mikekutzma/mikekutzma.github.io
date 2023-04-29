@@ -9,11 +9,11 @@ source "https://rubygems.org"
 # Happy Jekylling!
 
 # gem "minima", "~> 2.5"
-# gem "minimal-mistakes-jekyll"
+gem "minimal-mistakes-jekyll"
 
 group :jekyll_plugins do
-  gem "github-pages", "~> 228"
-  gem "jekyll-feed", "~> 0.12"
+  gem "github-pages"
+  gem "jekyll-feed"
   gem 'jekyll-seo-tag'
   gem 'jekyll-compose'
   gem "jekyll-include-cache"

@@ -8,7 +8,7 @@ permalink: /:categories/:year/:month/:day/:title
 search: true
 locale: "en-US"
 
-remote_theme: "mmistakes/minimal-mistakes@4.24.0"
+theme: "minimal-mistakes"
 minimal_mistakes_skin: default
 
 plugins:
