@@ -1,8 +1,7 @@
 ---
-layout: post
 title: "Bridge & Tunnel Data 4 Ways"
-date: 2023-04-20 12:00:00 EST
-tags: Tech MTA Azure
+date: 2023-04-20 12:00:00 -0400
+tags: Tech MTA Azure Iceberg Spark
 ---
 
 Here we look at a few different ways to store the [MTA Bridge and Tunnel Hourly

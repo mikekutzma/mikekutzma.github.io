@@ -7,15 +7,16 @@ source "https://rubygems.org"
 #
 # This will help ensure the proper Jekyll version is running.
 # Happy Jekylling!
-# gem "jekyll", "~> 4.3.2"
-# This is the default theme for new Jekyll sites. You may change this to anything you like.
-gem "minima", "~> 2.5"
+
+# gem "minima", "~> 2.5"
+# gem "minimal-mistakes-jekyll"
 
 group :jekyll_plugins do
   gem "github-pages", "~> 228"
   gem "jekyll-feed", "~> 0.12"
   gem 'jekyll-seo-tag'
   gem 'jekyll-compose'
+  gem "jekyll-include-cache"
 end
 
 # Windows and JRuby does not include zoneinfo files, so bundle the tzinfo-data gem

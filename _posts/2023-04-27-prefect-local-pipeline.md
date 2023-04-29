@@ -1,9 +1,9 @@
 ---
-layout: post
 title: Prefect Local Pipeline
 date: 2023-04-27 08:48 -0400
+tags: Tech MTA Azure Prefect Iceberg Spark
 ---
-# Prefect Pipeline Demo
+
 * Orchestration: Local
 * Compute: Local
 * Storage: Cloud
@@ -39,7 +39,7 @@ venv/bin/pip freeze > requirements.txt
 We'll make use of Spark for some of our transformation tasks, so we'll want
 Spark running locally as well. Installing a local spark cluster is outside of
 the scope of this post, we'll assume Spark3.3.2. Some resources:
-*  
+* [https://spark.apache.org/downloads.html](https://spark.apache.org/downloads.html) 
 
 We'll also need a few jars that will allow us to load data into Azure and on
 Azure, into Iceberg tables. For now, we'll just grab them locally
@@ -75,7 +75,7 @@ like to run prefect locally.
 
 Running this pipeline, we can see data being successfully extracted and loaded
 into a local json file.
-![local success]({{site.url}}/assets/images/2023-04-27-prefect-local-pipeline/local-success.png)
+![local success](/assets/images/2023-04-27-prefect-local-pipeline/local-success.png)
 With this working, we can swap out our local storage with our azure storage.
 
 To do this, we'll replace our `write_locally` task with a new
