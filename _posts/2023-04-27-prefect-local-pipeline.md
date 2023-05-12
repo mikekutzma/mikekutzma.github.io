@@ -177,6 +177,7 @@ After which we should see successful logs
 ![load to azure logs]({{site.url}}/assets/images/2023-04-27-prefect-local-pipeline/load-to-azure-logs.png)
 And upon checking our container, we can now see the blob in our new staging zone
 ![azure json]({{site.url}}/assets/images/2023-04-27-prefect-local-pipeline/azure-json.png)
+### Adding Spark Task
 We're ready to now add a second step in our pipeline, namely ingesting our
 staged blob into an Iceberg table.
 
