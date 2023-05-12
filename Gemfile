@@ -11,7 +11,6 @@ group :jekyll_plugins do
   gem "jemoji"
   gem "jekyll-include-cache"
   gem "jekyll-algolia"
-  gem "jekyll-mermaid"
 end
 
 # Windows and JRuby does not include zoneinfo files, so bundle the tzinfo-data gem

@@ -288,12 +288,12 @@ The above pipeline gives us a dependency graph that looks like
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 </script>
-{% mermaid %}
+<div class="mermaid">
 graph TD;
     get_bnt_data-->load_to_azure_blob;
     create_bnt_iceberg_table-->append_bnt_blob_to_iceberg;
     load_to_azure_blob-->append_bnt_blob_to_iceberg;
-{% endmermaid %}
+</div>
 
 Finally, we can execute our pipeline and confirm it runs successfully.
 
