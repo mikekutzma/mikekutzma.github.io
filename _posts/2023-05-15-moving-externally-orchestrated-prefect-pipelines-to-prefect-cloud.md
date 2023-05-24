@@ -58,4 +58,73 @@ upgrade to a paid option if you choose not to self-host the Prefect Server, but
 for a data engineer validating the framework or building a POC, Prefect Cloud
 can save a lot of time during the early stages of onboarding.
 
+Having created our free Prefect Cloud instance, we'll want to create a new
+workspace (we can call this `mtademo`), grab an API key, and log in from our
+development machine with
+
+```bash
+venv/bin/prefect cloud login
+```
+
+From here, we can run our existing pipeline exactly as before
+
+```bash
+venv/bin/python pipeline.py \
+    --storage-account <your-storage-account> \
+    --container mta-demo \
+    --access-key <your-access-key> \
+    --databricks-address <your-databricks-address> \
+    --databricks-token <your-databricks-token> \
+    --databricks-cluster-id <your-cluster-id> \
+    --start-date 2019-01-01 \
+    --stop-date 2023-01-01
+```
+ which should execute exactly as previously, however now the run should be
+ viewable on the UI (under 'Flow Runs').
+
+![local-pipeline-UI](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/local-pipeline-UI.png)
+
+While the prefect server didn't have any control over the run, you can think of
+this as the server simply "knowing about" the run. Because of this, from the UI
+you won't have any control over executing the run again or scheduling it for a
+future run.
+
+In order to hand over the orchestration of the pipeline to the server, we'll
+need to 'deploy' the flow. First though, we'll take a small detour to set up
+some Blocks, or stored configs, that will simplify our execution.
+
+### Moving configs to Blocks
+Blocks are simply structured configs, stored in the Prefect Server database,
+that are available to flows at runtime. 
+
+We'll use a number of predefined Blocks (mostly to store base level credentials
+that might be used in multiple other blocks), and compose these with some
+custom Blocks.
+
+We'll create a new file in our module `mtademo/blocks.py`, and add the
+following Block defintions
+
+{% highlight python %}
+{% include
+code/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/blocks.py
+%}
+{% endhighlight %}
+
+We can then register these blocks with the UI with the command
+```bash
+venv/bin/prefect block register --file mtaprefect/blocks.py
+```
+
+With these registered, we should now see them on the API, and we can begin
+configuring the Blocks.
+
+![azure-credentials-block](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/azure-credentials-block.png)
+
+![azure-container-block](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/azure-container-block.png)
+
+![iceberg-block](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/iceberg-block.png)
+
+![databricks-credentials-block](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/databricks-credentials-block.png)
+
+![databricks-cluster-block](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/databricks-cluster-block.png)
 
