@@ -128,3 +128,160 @@ configuring the Blocks.
 
 ![databricks-cluster-block](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/databricks-cluster-block.png)
 
+With the blocks available on the server, we can now update our pipeline to use
+them, first importing the blocks form our module
+
+```python
+from mtaprefect.blocks import (
+    AzureContainer,
+    DatabricksConnectCluster,
+    IcebergAzureHadoop,
+)
+```
+
+And then updating our flow method (Adding some flow parameters as well such as
+flow name)
+
+```python
+@flow(
+    name="bnt-hourly-traffic",
+    description="Pulls data from Bridge & Tunnel Hourly Traffic dataset and appends to iceberg table in Azure using spark on Databricks",
+)
+def pipeline(
+    start_date: Optional[datetime.date] = None,
+    stop_date: Optional[datetime.date] = None,
+):
+    mtademo_bucket = AzureContainer.load("mtademo-container")
+    iceberg = IcebergAzureHadoop.load("mtademo-iceberg")
+    databricks_cluster = DatabricksConnectCluster.load("mtademo-singlenode-databricks")
+
+    blob_name = "stage/bnt_traffic_hourly.json"
+    table_name = iceberg.get_table_name(zone="bronze", table="bnt_traffic_hourly")
+
+    spark_configs = {**iceberg.spark_configs(), **databricks_cluster.spark_configs()}
+
+    start_date, stop_date = get_bnt_date_params(start_date, stop_date)
+    data = get_bnt_data.submit(
+        start_date,
+        stop_date,
+    )
+
+    table_created = create_bnt_iceberg_table.submit(
+        spark_configs,
+        table_name,
+    )
+
+    blob_loaded = load_to_azure_blob.submit(
+        data,
+        mtademo_bucket,
+        blob_name,
+        wait_for=[data],
+    )
+
+    append_bnt_blob_to_iceberg.submit(
+        spark_configs,
+        table_name,
+        mtademo_bucket.url(blob_name),
+        wait_for=[table_created, blob_loaded],
+    )
+```
+
+You'll notice that we've also updated our date parameters to be optional, and
+used another task to get default start and stop dates. We define this task as
+such
+
+```python
+@task
+def get_bnt_date_params(
+    start_date: Optional[datetime.date],
+    stop_date: Optional[datetime.date],
+):
+    if start_date is None or stop_date is None:
+        base_date = prefect.runtime.flow_run.scheduled_start_time
+        stop_date = base_date - datetime.timedelta(days=1)
+        start_date = base_date - datetime.timedelta(days=8)
+    return start_date, stop_date
+```
+
+Here we make use of the scheduled start time to determine the days to run for.
+Our default will be a week of dates, ending the day before the run date (T-1).
+However giving these as params allows for running the flow for arbitrary dates
+if needed for a backfill or some such.
+
+In order to keep things tidy, and allow from growing our project over time,
+we'll alow move our pipeline code under the `mtaprefect/flows` module. This
+module should now look like this
+
+```
+mike@kosh:~/prefect-azure-demo$ tree mtaprefect/
+mtaprefect/
+├── __init__.py
+├── blocks.py
+└── flows
+    ├── __init__.py
+    └── bnt_hourly_traffic.py
+```
+
+
+## Deployment
+
+We'll use a [project-style
+deployment](https://docs.prefect.io/latest/concepts/projects/). First, we'll
+create our `prefect.yaml` file
+
+```yaml
+name: prefect-azure-demo
+prefect-version: 2.10.9
+
+pull:
+- prefect.projects.steps.git_clone_project:
+    repository: git@github.com:mikekutzma/prefect-azure-demo.git
+    branch: master
+    access_token: null
+```
+
+This will allow our worker processes to pull the most up-to-date version on our
+flows from github.
+
+Next, we'll define our deployments in the `deployment.yaml` file.
+
+```yaml
+deployments:
+  - name: bnt-weekly
+    description: BNT Hourly data pulled weekly
+    schedule:
+      # Every Monday at noon
+      cron: "0 12 * * 1"
+    entrypoint: mtaprefect/flows/bnt_hourly_traffic.py:pipeline
+    work_pool:
+      name: prod-pool
+```
+
+This sets our flow to run every monday at noon. This is based on the fact that
+the dataset is updated every Sunday, so this schedule should allow us not to
+miss any data.
+
+Finally, with our definitions in place we can deploy our flows with
+
+```bash
+venv/bin/prefect deploy --all
+```
+
+Having done so, we can now check the UI and see our deployment
+
+![deployed-flow](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/deployed-flow.png)
+Finally, provided we have a worker running either locally or in our production
+infrastructure, we can execute our flow from the UI or watch for it to run on
+schedule.
+
+We can see in our worker logs that first thing that happened when it picked up
+this run was to clone our project from github, and begin execution as usual. We
+can here start to see how this works well with a productionalized SDLC, where
+we can manage releases through CI/CD
+
+![ran-deployment-logs](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/ran-deployment-logs.png)
+
+![flow-graph](/assets/images/2023-05-15-moving-externally-orchestrated-prefect-pipelines-to-prefect-cloud/flow-graph.png)
+
+Accompanying code for this post can be found [on
+github](https://github.com/mikekutzma/prefect-azure-demo).
